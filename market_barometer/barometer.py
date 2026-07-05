@@ -122,7 +122,6 @@ def _light_breadth(market) -> Light:
 
     if closes is not None and closes.shape[1] >= 5:
         p50 = br.pct_above_ma(closes, 50)
-        p200 = br.pct_above_ma(closes, 200) if len(closes) >= 200 else None
         t2108 = br.pct_above_ma(closes, 40)
         ad = br.advance_decline(closes)
         thrust = br.thrust_days(closes)
@@ -388,10 +387,11 @@ def compute_barometer(market) -> BarometerResult:
     caution = (num / den * 100.0) if den > 0 else float("nan")
 
     band, guidance = "N/A", "insufficient data"
-    for lo, hi, name, text in BANDS:
-        if not _isnan(caution) and lo <= caution < hi or (hi == 100 and caution == 100):
-            band, guidance = name, text
-            break
+    if not _isnan(caution):
+        for lo, hi, name, text in BANDS:
+            if (lo <= caution < hi) or (hi == 100 and caution == 100):
+                band, guidance = name, text
+                break
 
     # Collect the headline flags (red or notable checks).
     flags = []

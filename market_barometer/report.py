@@ -8,6 +8,8 @@ _DOT = {"GREEN": "🟢", "AMBER": "🟡", "RED": "🔴", "N/A": "⚪"}
 
 
 def _bar(score: float, width: int = 40) -> str:
+    if score != score:  # NaN — no scorable lights had data
+        return "[" + "?" * width + "] n/a"
     filled = int(round(score / 100 * width))
     return "[" + "#" * filled + "-" * (width - filled) + f"] {score:.0f}/100"
 

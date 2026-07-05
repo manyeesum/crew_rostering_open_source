@@ -23,6 +23,11 @@ So the tool does **not** emit a naked "BUY/SELL". It emits a **Caution Score
 > irrational; every signal here can be early or wrong. Do your own research and
 > consult a licensed professional before making decisions.
 
+**Project documentation:**
+- [`METHODOLOGY.md`](METHODOLOGY.md) — the distilled source framework (canonical; code serves it)
+- [`GOVERNANCE.md`](GOVERNANCE.md) — architecture rules, data contracts, verification gate, roadmap, handoff guide
+- `tests/` — the behavioral contract; run `python -m market_barometer.tests.test_barometer`
+
 ---
 
 ## The six warning lights
