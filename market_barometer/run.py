@@ -56,6 +56,10 @@ def main(argv=None) -> int:
     p.add_argument("--stockcharts-dir", default=None,
                    help="folder of StockCharts CSV downloads ($NYAD, $SPXA50R, ...); "
                         "official series override computed approximations")
+    p.add_argument("--save-history", nargs="?", const="barometer_history.csv",
+                   default=None, metavar="CSV",
+                   help="append today's reading to a history CSV (default: "
+                        "barometer_history.csv) and show the recent trend")
     args = p.parse_args(argv)
 
     macro = _parse_macro(args.macro)
@@ -74,6 +78,14 @@ def main(argv=None) -> int:
 
     result = compute_barometer(market)
     print(render(result))
+
+    if args.save_history:
+        from .history import render_trend, save_history
+        df = save_history(result, args.save_history)
+        print(f"\n  saved to {args.save_history} ({len(df)} readings)")
+        trend = render_trend(df)
+        if trend:
+            print(trend)
     return 0
 
 

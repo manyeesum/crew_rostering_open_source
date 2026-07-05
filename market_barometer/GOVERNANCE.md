@@ -143,6 +143,7 @@ Non-negotiable invariants:
 | 2026-07-05 | Lives in `market_barometer/` inside crew_rostering repo | Standalone `market-barometer` GitHub repo exists but session integration could not push (403 / approval gate); ready-to-push bundle delivered to owner |
 | 2026-07-05 | Community-research round (RESEARCH.md): added McClellan, NH-NL, VIX/VIX3M, XLY/XLP + 4 macro manual keys | Validate video framework against wider practice; only confluence-grade indicators admitted (single-source exotica rejected) |
 | 2026-07-05 | StockCharts integration = member CSV downloads read by `stockcharts.py`; NO automated login/scraping | Owner has a subscription, but ToS prohibits robotic access and credential sharing is a security risk; official series override computed ones when present |
+| 2026-07-05 | Added `--save-history` (history.py) and GUIDE.md for the non-programmer owner | Daily runs should accumulate a Caution-Score time series; owner-facing docs must be copy-paste simple. Keep GUIDE.md in sync with any CLI change |
 
 ## 9. Session-environment notes (for future AI sessions)
 

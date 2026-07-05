@@ -24,6 +24,7 @@ So the tool does **not** emit a naked "BUY/SELL". It emits a **Caution Score
 > consult a licensed professional before making decisions.
 
 **Project documentation:**
+- [`GUIDE.md`](GUIDE.md) — **start here if you're not a programmer**: step-by-step setup, the exact StockCharts download list, daily/monthly routine, troubleshooting
 - [`METHODOLOGY.md`](METHODOLOGY.md) — the distilled source framework (canonical; code serves it)
 - [`RESEARCH.md`](RESEARCH.md) — community/literature validation with sources; risk-management playbook
 - [`GOVERNANCE.md`](GOVERNANCE.md) — architecture rules, data contracts, verification gate, roadmap, handoff guide

@@ -165,6 +165,21 @@ def test_seasonality_midterm_flag():
     assert season, "seasonality check must always be present"
 
 
+def test_save_history_appends_and_dedupes():
+    import os, tempfile
+    from market_barometer.history import render_trend, save_history
+
+    res = compute_barometer(synthetic_market("healthy"))
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "hist.csv")
+        save_history(res, p)
+        df = save_history(res, p)              # same date -> replaced, not doubled
+        assert len(df) == 1
+        assert df["caution_score"].iloc[0] < 20
+        assert "light_breadth_divergence" in df.columns
+        assert "HISTORY" in render_trend(df)
+
+
 def test_stockcharts_loader_and_official_override(tmp_path=None):
     """CSV loader maps symbols; official series replace computed ones."""
     import tempfile, os
