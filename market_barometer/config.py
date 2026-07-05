@@ -36,6 +36,7 @@ BREADTH_UNIVERSE = [
 ]
 
 VIX = "^VIX"
+VIX3M = "^VIX3M"   # 3-month implied vol; VIX/VIX3M > ~1.0 = backwardation (stress)
 
 # ---------------------------------------------------------------------------
 # Light weights  (the six "warning lights"; must sum to ~1.0)
@@ -62,6 +63,9 @@ TH = {
     "sectors_above20_hi": 60.0, "sectors_above20_lo": 30.0,
     "defensive_rot_lo": 0.0, "defensive_rot_hi": 3.0,     # 21d % gain of def/cyc ratio
     "thrust_net_lo": 0.0, "thrust_net_hi": -8.0,          # trailing (up-down) 4% movers; negative = bad
+    "nhnl_lo": 0.0, "nhnl_hi": -5.0,                      # net new 52wk highs-lows while index high
+    "mcclellan_lo": 0.0, "mcclellan_hi": -20.0,           # oscillator negative while index high
+    "risk_appetite_lo": 0.0, "risk_appetite_hi": -4.0,    # XLY/XLP 21d %chg; falling = risk-off
     # momentum / extension
     "dist50_atr_lo": 4.0, "dist50_atr_hi": 7.0,           # >5x stretched, ~7x now
     "dist200_pct_lo": 20.0, "dist200_pct_hi": 50.0,       # 2000=90%, AI ~50-60%
@@ -75,6 +79,7 @@ TH = {
     "updown_vol_hi": 1.0, "updown_vol_lo": 0.6,           # <1 = distribution
     # news regime
     "vix_spike_lo": 0.0, "vix_spike_hi": 20.0,            # 5d % rise in VIX while mkt down
+    "vix_ts_lo": 0.90, "vix_ts_hi": 1.00,                 # VIX/VIX3M; >0.95 warning, >1 backwardation
 }
 
 # ---------------------------------------------------------------------------

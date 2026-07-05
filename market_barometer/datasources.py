@@ -31,6 +31,7 @@ class MarketData:
     constituents_volume: Optional[pd.DataFrame] = None
     sector_close: Optional[pd.DataFrame] = None
     vix: Optional[pd.Series] = None
+    vix3m: Optional[pd.Series] = None                # 3-month implied vol (^VIX3M)
     manual: dict = field(default_factory=dict)       # macro/sentiment overlays
 
 
@@ -124,6 +125,10 @@ def synthetic_market(scenario: str = "topping", n_days: int = 420, seed: int = 7
     else:
         base = 14 + rng.normal(0, 1.0, n_days)
     vix = pd.Series(np.clip(base + rng.normal(0, 0.6, n_days), 9, 60), index=dates)
+    # Term structure: healthy contango (VIX3M well above VIX); topping tape's
+    # front end catches up toward backwardation (ratio -> ~0.97).
+    ts_ratio = 0.97 if scenario == "topping" else 0.84
+    vix3m = vix / ts_ratio
 
     # --- macro / sentiment overlay (what you'd read off FRED / news) ---
     if scenario == "topping":
@@ -131,17 +136,20 @@ def synthetic_market(scenario: str = "topping", n_days: int = 420, seed: int = 7
             nfib=95.3, ppi_yoy=6.5, stagflation=True, yield_10y_rising=True,
             yield_curve_steepening=True, margin_debt_extreme=True, euphoria=True,
             homebuilders_diverging=True, news_reaction_negative=False, win_rate=0.42,
+            sahm_rule_triggered=False, yield_curve_uninverting=True,
+            credit_spreads_widening=True, put_call_complacent=True,
         )
     else:
         manual = dict(
             nfib=101.0, ppi_yoy=2.2, stagflation=False, yield_10y_rising=False,
             margin_debt_extreme=False, euphoria=False, homebuilders_diverging=False,
-            win_rate=0.62,
+            win_rate=0.62, sahm_rule_triggered=False, yield_curve_uninverting=False,
+            credit_spreads_widening=False, put_call_complacent=False,
         )
 
     return MarketData(
         index=index, constituents_close=closes, constituents_volume=volumes,
-        sector_close=sector_close, vix=vix, manual=manual,
+        sector_close=sector_close, vix=vix, vix3m=vix3m, manual=manual,
     )
 
 
@@ -182,16 +190,18 @@ def yfinance_market(period: str = "2y", manual: Optional[dict] = None) -> Market
     cons_vol = pd.DataFrame({t: _field(t, "Volume") for t in config.BREADTH_UNIVERSE}).dropna(how="all")
     sect_close = pd.DataFrame({t: _field(t, "Close") for t in config.SECTOR_ETFS}).dropna(how="all")
 
-    vix = None
-    try:
-        vraw = yf.download(config.VIX, period=period, auto_adjust=True, progress=False)
-        vix = vraw["Close"] if "Close" in vraw else vraw.iloc[:, 0]
-        if isinstance(vix, pd.DataFrame):
-            vix = vix.iloc[:, 0]
-    except Exception:
-        pass
+    def _download_series(ticker):
+        try:
+            raw = yf.download(ticker, period=period, auto_adjust=True, progress=False)
+            s = raw["Close"] if "Close" in raw else raw.iloc[:, 0]
+            return s.iloc[:, 0] if isinstance(s, pd.DataFrame) else s
+        except Exception:
+            return None
+
+    vix = _download_series(config.VIX)
+    vix3m = _download_series(config.VIX3M)
 
     return MarketData(
         index=index, constituents_close=cons_close, constituents_volume=cons_vol,
-        sector_close=sect_close, vix=vix, manual=manual or {},
+        sector_close=sect_close, vix=vix, vix3m=vix3m, manual=manual or {},
     )

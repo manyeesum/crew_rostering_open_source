@@ -60,6 +60,41 @@ def thrust_days(closes: pd.DataFrame, threshold: float = 0.04) -> pd.DataFrame:
     return pd.DataFrame({"up": up, "down": down, "net": up - down})
 
 
+def mcclellan_oscillator(closes: pd.DataFrame) -> pd.Series:
+    """McClellan Oscillator: EMA19 - EMA39 of daily net advancers.
+
+    The community's go-to breadth-momentum gauge (validated in RESEARCH.md):
+    negative/falling while the index presses highs = the rally is running out
+    of participation. Classic bands: +/-70 overbought/oversold.
+
+    Note: computed on our universe's net advancers, not official NYSE A-D data,
+    so absolute levels are universe-relative; sign and divergence are the
+    meaningful reads. Normalised per 100 names for comparability.
+    """
+    net = advance_decline(closes)["net"] * (100.0 / max(1, closes.shape[1]))
+    ema19 = net.ewm(span=19, adjust=False, min_periods=19).mean()
+    ema39 = net.ewm(span=39, adjust=False, min_periods=39).mean()
+    return ema19 - ema39
+
+
+def risk_appetite_ratio(
+    sector_closes: pd.DataFrame,
+    risk_on: str = "XLY",
+    risk_off: str = "XLP",
+    window: int = 21,
+) -> pd.Series:
+    """Discretionary/Staples (XLY/XLP) relative strength, %-change over ``window``.
+
+    The classic risk-on/risk-off ratio chart (see RESEARCH.md): falling while
+    the index rises = risk appetite quietly leaving the market. Negative
+    returns = risk-off. Complements ``defensive_vs_cyclical``.
+    """
+    if risk_on not in sector_closes.columns or risk_off not in sector_closes.columns:
+        return pd.Series(dtype=float)
+    ratio = sector_closes[risk_on] / sector_closes[risk_off]
+    return (ratio / ratio.shift(window) - 1.0) * 100.0
+
+
 def net_new_highs(closes: pd.DataFrame, window: int = 252) -> pd.Series:
     """Net new 52-week highs minus lows across the universe, per day."""
     roll_max = closes.rolling(window, min_periods=window // 2).max()

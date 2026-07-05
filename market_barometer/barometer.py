@@ -158,6 +158,21 @@ def _light_breadth(market) -> Light:
                 "up/down volume (10d avg)", ramp(vu, TH["updown_vol_hi"], TH["updown_vol_lo"]),
                 f"{vu:.2f} (<1 = distribution under the surface)"))
 
+        # McClellan Oscillator negative while the index presses its highs
+        mo = _last(br.mcclellan_oscillator(closes))
+        mo_intensity = ramp(mo, TH["mcclellan_lo"], TH["mcclellan_hi"]) if index_high else 0.0
+        L.checks.append(Check(
+            "McClellan oscillator", mo_intensity,
+            f"{mo:+.0f} {'while index at highs' if index_high else '(index not at highs)'}"))
+
+        # Net new 52-week highs-lows deteriorating while index high
+        if len(closes) >= 150:
+            nh = _last(br.net_new_highs(closes))
+            nh_intensity = ramp(nh, TH["nhnl_lo"], TH["nhnl_hi"]) if index_high else 0.0
+            L.checks.append(Check(
+                "net new 52wk highs-lows", nh_intensity,
+                f"{nh:+.0f} (negative at index highs = Hindenburg-style split tape)"))
+
     # sector breadth + defensive rotation
     if market.sector_close is not None and market.sector_close.shape[1] >= 3:
         sec20 = _last(br.sectors_above_ma(market.sector_close, 20))
@@ -169,6 +184,10 @@ def _light_breadth(market) -> Light:
         L.checks.append(Check(
             "defensive rotation (21d)", ramp(vr, TH["defensive_rot_lo"], TH["defensive_rot_hi"]),
             f"{vr:+.1f}% def/cyc (rising = money playing defense)"))
+        ra = _last(br.risk_appetite_ratio(market.sector_close))
+        L.checks.append(Check(
+            "risk appetite XLY/XLP (21d)", ramp(ra, TH["risk_appetite_lo"], TH["risk_appetite_hi"]),
+            f"{ra:+.1f}% (falling = risk appetite leaving)"))
     return L
 
 
@@ -271,6 +290,20 @@ def _light_news_regime(market) -> Light:
             L.checks.append(Check(
                 "vol rising into strength (hedging)", 1.0 if hedging else 0.0,
                 f"VIX {vix20:+.0f}% & index {idx20:+.0f}% /20d" if hedging else "no hedging divergence"))
+    # VIX term structure: VIX/VIX3M approaching or above 1.0 = backwardation
+    # (front-end fear). >0.95 warning, >1.0 confirmed stress (see RESEARCH.md).
+    if market.vix is not None and market.vix3m is not None:
+        v, v3 = market.vix.dropna(), market.vix3m.dropna()
+        if len(v) and len(v3):
+            ts = float(v.iloc[-1]) / float(v3.iloc[-1])
+            L.checks.append(Check(
+                "VIX term structure (VIX/VIX3M)", ramp(ts, TH["vix_ts_lo"], TH["vix_ts_hi"]),
+                f"{ts:.2f} (>0.95 warning, >1.0 backwardation)"))
+    if market.manual.get("put_call_complacent") is not None:
+        pc = market.manual["put_call_complacent"]
+        L.checks.append(Check(
+            "put/call complacency", 1.0 if pc else 0.0,
+            "equity put/call at complacent extreme" if pc else "options positioning normal"))
     nr = market.manual.get("news_reaction_negative")
     if nr is not None:
         L.checks.append(Check(
@@ -307,6 +340,21 @@ def _light_macro(market) -> Light:
         L.checks.append(Check(
             "bear steepener (long up, short down)", 1.0 if m["yield_curve_steepening"] else 0.0,
             "30Y up / 2Y down = bad for tech" if m["yield_curve_steepening"] else "curve stable"))
+    if m.get("yield_curve_uninverting") is not None:
+        L.checks.append(Check(
+            "yield curve un-inverting", 1.0 if m["yield_curve_uninverting"] else 0.0,
+            "2s10s re-steepening after inversion — recessions typically start here"
+            if m["yield_curve_uninverting"] else "no un-inversion signal"))
+    if m.get("sahm_rule_triggered") is not None:
+        L.checks.append(Check(
+            "Sahm rule", 1.0 if m["sahm_rule_triggered"] else 0.0,
+            "unemployment 3m-avg +0.5pt off its 12m low = recession onset"
+            if m["sahm_rule_triggered"] else "Sahm rule not triggered"))
+    if m.get("credit_spreads_widening") is not None:
+        L.checks.append(Check(
+            "credit spreads widening", 1.0 if m["credit_spreads_widening"] else 0.0,
+            "HY spreads widening (credit smells trouble first)"
+            if m["credit_spreads_widening"] else "credit calm"))
     # --- sentiment / positioning extremes (contrarian top signals) ---
     if m.get("margin_debt_extreme") is not None:
         L.checks.append(Check(

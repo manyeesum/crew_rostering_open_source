@@ -25,6 +25,7 @@ So the tool does **not** emit a naked "BUY/SELL". It emits a **Caution Score
 
 **Project documentation:**
 - [`METHODOLOGY.md`](METHODOLOGY.md) — the distilled source framework (canonical; code serves it)
+- [`RESEARCH.md`](RESEARCH.md) — community/literature validation with sources; risk-management playbook
 - [`GOVERNANCE.md`](GOVERNANCE.md) — architecture rules, data contracts, verification gate, roadmap, handoff guide
 - `tests/` — the behavioral contract; run `python -m market_barometer.tests.test_barometer`
 

@@ -57,11 +57,14 @@ datasources.py              (the ONLY module allowed to touch the network)
 | `constituents_close/_volume` | DataFrame, columns = tickers | breadth, failed breakouts |
 | `sector_close` | DataFrame, columns = sector ETFs | sector breadth, rotation |
 | `vix` | Series | volatility/news regime |
+| `vix3m` | Series | VIX term-structure check (VIX/VIX3M) |
 | `manual` | dict | overlays below |
 
 Recognized `manual` overlay keys (all optional; absent = check skipped):
 `nfib` (float), `ppi_yoy` (float %), `stagflation` (bool),
 `yield_10y_rising` (bool), `yield_curve_steepening` (bool),
+`yield_curve_uninverting` (bool), `sahm_rule_triggered` (bool),
+`credit_spreads_widening` (bool), `put_call_complacent` (bool),
 `margin_debt_extreme` (bool), `euphoria` (bool),
 `homebuilders_diverging` (bool), `news_reaction_negative` (bool),
 `win_rate` (float 0–1).
@@ -119,6 +122,13 @@ Non-negotiable invariants:
 6. **Dashboard** — Streamlit/HTML panel with lights + score sparkline.
    *Accept:* renders both synthetic scenarios; no framework lock-in leaking
    into the engine.
+7. **Zweig Breadth Thrust re-entry signal** — 10d EMA of advancers% crossing
+   <40% → >61.5% within 10 sessions; surface as a green "re-entry" banner
+   (the monitor should help getting back *in*, not only out). *Accept:*
+   detection function + test on a constructed thrust; see RESEARCH.md §1.
+8. **Extra canary ratios** — SPHB/SPLV, SMH/SPY, copper/gold as optional
+   tickers inside the intermarket light. *Accept:* graceful skip when
+   tickers absent.
 
 ## 8. Decision log
 
@@ -130,6 +140,7 @@ Non-negotiable invariants:
 | 2026-07-05 | Macro overlay via manual flags first, FRED later | No live macro source in sandbox; keeps engine testable |
 | 2026-07-05 | ~40-name curated breadth universe for v1 | Keeps yfinance pulls light; full membership is Roadmap #1 |
 | 2026-07-05 | Lives in `market_barometer/` inside crew_rostering repo | Standalone `market-barometer` GitHub repo exists but session integration could not push (403 / approval gate); ready-to-push bundle delivered to owner |
+| 2026-07-05 | Community-research round (RESEARCH.md): added McClellan, NH-NL, VIX/VIX3M, XLY/XLP + 4 macro manual keys | Validate video framework against wider practice; only confluence-grade indicators admitted (single-source exotica rejected) |
 
 ## 9. Session-environment notes (for future AI sessions)
 

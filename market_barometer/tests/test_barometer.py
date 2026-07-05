@@ -83,6 +83,30 @@ def test_failed_breakout_rate_no_breakouts_is_nan():
     assert rate != rate                  # NaN
 
 
+def test_mcclellan_sign_tracks_breadth():
+    n = 120
+    up = pd.DataFrame({f"U{i}": 100 + np.arange(n) * 1.0 for i in range(6)})
+    dn = pd.DataFrame({f"D{i}": 100 - np.arange(n) * 0.5 for i in range(6)})
+    assert br.mcclellan_oscillator(up).dropna().iloc[-1] > 0
+    assert br.mcclellan_oscillator(dn).dropna().iloc[-1] < 0
+
+
+def test_risk_appetite_ratio_direction_and_missing_columns():
+    n = 60
+    sec = pd.DataFrame({"XLY": 100 - np.arange(n) * 0.5,      # discretionary falling
+                        "XLP": 100 + np.arange(n) * 0.5})     # staples rising
+    ra = br.risk_appetite_ratio(sec)
+    assert ra.dropna().iloc[-1] < 0                            # risk-off
+    assert br.risk_appetite_ratio(sec[["XLY"]]).empty          # graceful when missing
+
+
+def test_vix_term_structure_check_present():
+    res = compute_barometer(synthetic_market("topping"))
+    news = [L for L in res.lights if L.key == "news_regime"][0]
+    names = [c.name for c in news.checks]
+    assert "VIX term structure (VIX/VIX3M)" in names
+
+
 def test_advance_decline_shapes():
     closes = pd.DataFrame({"A": [1, 2, 3, 2], "B": [1, 1, 2, 3], "C": [3, 2, 1, 1]},
                           dtype=float)
