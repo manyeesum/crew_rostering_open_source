@@ -119,6 +119,45 @@ def _light_breadth(market) -> Light:
     closes = market.constituents_close
     idx_close = market.index["close"]
     index_high = _is_near_high(idx_close, 20)
+    official = market.official or {}
+
+    # Official StockCharts series take precedence over computed approximations.
+    off_p50 = official.get("pct_above_50")
+    off_t2108 = official.get("t2108")
+    off_nhnl = official.get("net_new_highs")
+    ad_line_official = None
+    if official.get("ad_net") is not None:
+        ad_line_official = official["ad_net"].cumsum()
+
+    if off_p50 is not None:
+        v50 = _last(off_p50)
+        L.checks.append(Check(
+            "% above 50-day MA [official]",
+            ramp(v50, TH["pct_above_50_hi"], TH["pct_above_50_lo"]),
+            f"{v50:.0f}% $SPXA50R (weak <{TH['pct_above_50_lo']:.0f})"))
+    if official.get("pct_above_200") is not None:
+        v200 = _last(official["pct_above_200"])
+        L.checks.append(Check(
+            "% above 200-day MA [official]",
+            ramp(v200, TH["pct_above_200_hi"], TH["pct_above_200_lo"]),
+            f"{v200:.0f}% $SPXA200R (<60% at index highs = topping)"))
+    if off_t2108 is not None:
+        vt = _last(off_t2108)
+        L.checks.append(Check(
+            "T2108 [official]", ramp(vt, TH["t2108_hi"], TH["t2108_lo"]),
+            f"{vt:.0f}% (video cited 63%->39% into the top)"))
+    if off_nhnl is not None:
+        nh = _last(off_nhnl)
+        nh_i = ramp(nh, TH["nhnl_lo"], TH["nhnl_hi"]) if index_high else 0.0
+        L.checks.append(Check(
+            "net new highs-lows [official]", nh_i,
+            f"{nh:+.0f} $NYHL (negative at index highs = split tape)"))
+    if ad_line_official is not None:
+        ad_high = _is_near_high(ad_line_official, 20)
+        div = 1.0 if (index_high and not ad_high) else 0.0
+        L.checks.append(Check(
+            "A-D line divergence [official]", div,
+            "index at 20-day high but $NYAD line is NOT" if div else "$NYAD confirming"))
 
     if closes is not None and closes.shape[1] >= 5:
         p50 = br.pct_above_ma(closes, 50)
@@ -126,23 +165,26 @@ def _light_breadth(market) -> Light:
         ad = br.advance_decline(closes)
         thrust = br.thrust_days(closes)
 
-        v50 = _last(p50)
-        L.checks.append(Check(
-            "% above 50-day MA", ramp(v50, TH["pct_above_50_hi"], TH["pct_above_50_lo"]),
-            f"{v50:.0f}% (weak <{TH['pct_above_50_lo']:.0f}, healthy >{TH['pct_above_50_hi']:.0f})"))
+        if off_p50 is None:
+            v50 = _last(p50)
+            L.checks.append(Check(
+                "% above 50-day MA", ramp(v50, TH["pct_above_50_hi"], TH["pct_above_50_lo"]),
+                f"{v50:.0f}% (weak <{TH['pct_above_50_lo']:.0f}, healthy >{TH['pct_above_50_hi']:.0f})"))
 
-        vt = _last(t2108)
-        L.checks.append(Check(
-            "T2108 (% above 40-day)", ramp(vt, TH["t2108_hi"], TH["t2108_lo"]),
-            f"{vt:.0f}%  (video cited 63%->39% into the top)"))
+        if off_t2108 is None:
+            vt = _last(t2108)
+            L.checks.append(Check(
+                "T2108 (% above 40-day)", ramp(vt, TH["t2108_hi"], TH["t2108_lo"]),
+                f"{vt:.0f}%  (video cited 63%->39% into the top)"))
 
         # A-D line divergence vs the index (index new high, A-D line not)
-        ad_line = ad["ad_line"]
-        ad_high = _is_near_high(ad_line, 20)
-        div = 1.0 if (index_high and not ad_high) else 0.0
-        L.checks.append(Check(
-            "A-D line divergence", div,
-            "index at 20-day high but A-D line is NOT" if div else "A-D confirming"))
+        if ad_line_official is None:
+            ad_line = ad["ad_line"]
+            ad_high = _is_near_high(ad_line, 20)
+            div = 1.0 if (index_high and not ad_high) else 0.0
+            L.checks.append(Check(
+                "A-D line divergence", div,
+                "index at 20-day high but A-D line is NOT" if div else "A-D confirming"))
 
         # thrust: trailing net (up4% - down4%) over 10 sessions
         net_thrust = float(thrust["net"].iloc[-10:].sum())
@@ -166,7 +208,7 @@ def _light_breadth(market) -> Light:
             f"{mo:+.0f} {'while index at highs' if index_high else '(index not at highs)'}"))
 
         # Net new 52-week highs-lows deteriorating while index high
-        if len(closes) >= 150:
+        if off_nhnl is None and len(closes) >= 150:
             nh = _last(br.net_new_highs(closes))
             nh_intensity = ramp(nh, TH["nhnl_lo"], TH["nhnl_hi"]) if index_high else 0.0
             L.checks.append(Check(

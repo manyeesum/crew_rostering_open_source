@@ -33,6 +33,8 @@ class MarketData:
     vix: Optional[pd.Series] = None
     vix3m: Optional[pd.Series] = None                # 3-month implied vol (^VIX3M)
     manual: dict = field(default_factory=dict)       # macro/sentiment overlays
+    official: dict = field(default_factory=dict)     # StockCharts official breadth
+                                                     # series (see stockcharts.py)
 
 
 # ---------------------------------------------------------------------------

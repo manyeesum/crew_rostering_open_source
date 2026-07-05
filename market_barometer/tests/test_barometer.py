@@ -165,6 +165,36 @@ def test_seasonality_midterm_flag():
     assert season, "seasonality check must always be present"
 
 
+def test_stockcharts_loader_and_official_override(tmp_path=None):
+    """CSV loader maps symbols; official series replace computed ones."""
+    import tempfile, os
+    from market_barometer.stockcharts import load_stockcharts_dir
+
+    with tempfile.TemporaryDirectory() as d:
+        dates = pd.bdate_range("2025-01-01", periods=30)
+        rows = "\n".join(f"{dt.date()},{40 + i * 0.1:.2f}" for i, dt in enumerate(dates))
+        with open(os.path.join(d, "$SPXA50R.csv"), "w") as f:
+            f.write("Date,Close\n" + rows)
+        with open(os.path.join(d, "nyad.csv"), "w") as f:      # no $, lowercase
+            f.write("Date,Close\n" + "\n".join(
+                f"{dt.date()},{(-1) ** i * 100}" for i, dt in enumerate(dates)))
+        with open(os.path.join(d, "ignore_me.csv"), "w") as f:  # unrecognized
+            f.write("Date,Close\n2025-01-01,1\n")
+
+        official = load_stockcharts_dir(d)
+        assert set(official) == {"pct_above_50", "ad_net"}
+        assert abs(official["pct_above_50"].iloc[-1] - 42.9) < 0.01
+
+    # Official series must replace the computed check in the breadth light.
+    m = synthetic_market("topping")
+    m.official = {"pct_above_50": pd.Series([45.0] * 10,
+                  index=pd.bdate_range("2025-08-01", periods=10))}
+    L = bar._light_breadth(m)
+    names = [c.name for c in L.checks]
+    assert "% above 50-day MA [official]" in names
+    assert "% above 50-day MA" not in names          # computed one suppressed
+
+
 # ---------------------------------------------------------------------------
 # plain-python runner (no pytest needed)
 # ---------------------------------------------------------------------------

@@ -59,6 +59,7 @@ datasources.py              (the ONLY module allowed to touch the network)
 | `vix` | Series | volatility/news regime |
 | `vix3m` | Series | VIX term-structure check (VIX/VIX3M) |
 | `manual` | dict | overlays below |
+| `official` | dict of Series | StockCharts official breadth (keys per `stockcharts.SYMBOL_MAP`); overrides computed equivalents in the breadth light |
 
 Recognized `manual` overlay keys (all optional; absent = check skipped):
 `nfib` (float), `ppi_yoy` (float %), `stagflation` (bool),
@@ -141,6 +142,7 @@ Non-negotiable invariants:
 | 2026-07-05 | ~40-name curated breadth universe for v1 | Keeps yfinance pulls light; full membership is Roadmap #1 |
 | 2026-07-05 | Lives in `market_barometer/` inside crew_rostering repo | Standalone `market-barometer` GitHub repo exists but session integration could not push (403 / approval gate); ready-to-push bundle delivered to owner |
 | 2026-07-05 | Community-research round (RESEARCH.md): added McClellan, NH-NL, VIX/VIX3M, XLY/XLP + 4 macro manual keys | Validate video framework against wider practice; only confluence-grade indicators admitted (single-source exotica rejected) |
+| 2026-07-05 | StockCharts integration = member CSV downloads read by `stockcharts.py`; NO automated login/scraping | Owner has a subscription, but ToS prohibits robotic access and credential sharing is a security risk; official series override computed ones when present |
 
 ## 9. Session-environment notes (for future AI sessions)
 

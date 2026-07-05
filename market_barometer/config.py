@@ -59,6 +59,7 @@ LIGHT_WEIGHTS = {
 TH = {
     # breadth
     "pct_above_50_hi": 60.0, "pct_above_50_lo": 40.0,     # <60% while index high = topping
+    "pct_above_200_hi": 60.0, "pct_above_200_lo": 40.0,   # same read on the 200-day
     "t2108_hi": 55.0, "t2108_lo": 35.0,                   # % above 40-day (T2108); 39% cited
     "sectors_above20_hi": 60.0, "sectors_above20_lo": 30.0,
     "defensive_rot_lo": 0.0, "defensive_rot_hi": 3.0,     # 21d % gain of def/cyc ratio

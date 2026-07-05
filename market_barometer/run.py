@@ -53,6 +53,9 @@ def main(argv=None) -> int:
                    help="only used with --source synthetic")
     p.add_argument("--period", default="2y", help="yfinance history window")
     p.add_argument("--macro", default=None, help="key=value,... macro/sentiment overlays")
+    p.add_argument("--stockcharts-dir", default=None,
+                   help="folder of StockCharts CSV downloads ($NYAD, $SPXA50R, ...); "
+                        "official series override computed approximations")
     args = p.parse_args(argv)
 
     macro = _parse_macro(args.macro)
@@ -63,6 +66,11 @@ def main(argv=None) -> int:
         market = ds.synthetic_market(scenario=args.scenario)
         if macro:
             market.manual.update(macro)
+
+    if args.stockcharts_dir:
+        from .stockcharts import load_stockcharts_dir
+        market.official = load_stockcharts_dir(args.stockcharts_dir)
+        print(f"[stockcharts] loaded official series: {sorted(market.official)}")
 
     result = compute_barometer(market)
     print(render(result))

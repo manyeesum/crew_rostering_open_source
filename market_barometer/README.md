@@ -112,6 +112,32 @@ yield_10y_rising=1,yield_curve_steepening=1,homebuilders_diverging=1,win_rate=0.
 
 ---
 
+## Using your StockCharts subscription (official breadth data)
+
+The channel reads its breadth off StockCharts, and official series beat our
+computed approximations. **Don't automate the login** (their ToS prohibits
+robotic access and it risks your subscription) — instead, download the CSVs as
+a member and feed the folder to the monitor:
+
+1. Log in at stockcharts.com and open each symbol's chart, then use the
+   **Past Data / historical download** member feature to save CSVs:
+   `$SPXA50R` (% above 50-day), `$SPXA200R` (% above 200-day),
+   `$NYAD` (NYSE advance-decline), `$NYHL` (net new highs-lows),
+   and optionally `!GT40SPX` (T2108-style % above 40-day).
+2. Save them into one folder, e.g. `~/sc_data/` — filenames just need to
+   contain the symbol (`$NYAD.csv`, `nyad.csv`, `NYAD.txt` all work).
+3. Run with the folder attached:
+
+```bash
+python -m market_barometer.run --source yfinance --stockcharts-dir ~/sc_data
+```
+
+Official series **replace** the computed equivalents in the breadth light and
+are tagged `[official]` in the panel. Daily routine: refresh the downloads
+(a couple of minutes), re-run the command.
+
+---
+
 ## Where each input comes from (free sources)
 
 | Input | Free source |
